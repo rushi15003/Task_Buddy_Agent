@@ -5,13 +5,9 @@ Task Buddy Agent is a smart, lightweight AI assistant built using Google’s **A
 ---
 
 ## 🎬 Demo
+▶️ [Click to watch demo video](demo/task-buddy-demo.mp4)
 
-<div align="center">
-  <video width="700" controls>
-    <source src="demo/Task Buddy.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-</div>
+> The video is included directly in the repo under the `demo/` folder, no YouTube required!
 
 ---
 
