@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Buddy Agent</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div id="popup" class="popup hidden">
+        <div class="popup-content">
+            <h2>⏰ Timer Complete!</h2>
+            <button onclick="closePopup()">Close</button>
+        </div>
+    </div>
+    <audio id="timer-sound" src="{{ url_for('static', filename='sounds/timer-done.mp3') }}"></audio>
+
+    <div class="chat-container">
+        <header>
+            <img src="{{ url_for('static', filename='images/assistant.png') }}" alt="Agent" class="agent-avatar">
+            <h1>Task Buddy Agent</h1>
+        </header>
+
+        <div id="chat-box" class="chat-box">
+            </div>
+
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Ask me anything...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById("user-input");
+            const message = input.value.trim();
+            if (!message) return;
+
+            addMessage("user", message);
+            input.value = "";
+
+            const response = await fetch("/ask", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message })
+            });
+
+            const data = await response.json();
+            addMessage("agent", data.response);
+        }
+
+        function addMessage(sender, message) {
+            const chatBox = document.getElementById("chat-box");
+
+            const msgDiv = document.createElement("div");
+            msgDiv.className = sender === "user" ? "message user" : "message agent";
+
+            const img = document.createElement("img");
+            img.src = sender === "user"
+                ? "{{ url_for('static', filename='images/user.png') }}"
+                : "{{ url_for('static', filename='images/assistant.png') }}";
+            img.alt = sender;
+
+            const bubble = document.createElement("div");
+            bubble.className = "bubble";
+            bubble.innerText = message;
+
+            msgDiv.appendChild(img);
+            msgDiv.appendChild(bubble);
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // 🎯 Check for a timer response from agent
+            if (sender === "agent" && message.includes("⏳ Timer started for")) {
+                const match = message.match(/(\d+)\s*seconds/);
+                if (match) {
+                    const duration = parseInt(match[1]);
+                    showCountdown(chatBox, duration);
+                }
+            }
+        }
+
+        function showCountdown(parent, seconds) {
+            const countdownDiv = document.createElement("div");
+            countdownDiv.className = "countdown";
+            parent.appendChild(countdownDiv);
+
+            let remaining = seconds;
+            const interval = setInterval(() => {
+                countdownDiv.innerText = `⏰ ${remaining}s remaining...`;
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    countdownDiv.remove();
+                    showPopup();  // 🎉 custom modal
+                }
+                remaining--;
+            }, 1000);
+        }
+
+        function showPopup() {
+            // Show the popup
+            const popup = document.getElementById("popup");
+            popup.classList.remove("hidden");
+
+            // Play the sound
+            const sound = document.getElementById("timer-sound");
+            sound.currentTime = 0;
+            sound.play();
+
+            // Auto-close after 3 seconds
+            setTimeout(() => {
+                closePopup(); // Assuming closePopup function exists elsewhere or should be added
+            }, 3000);
+        }
+
+        // Added a placeholder for closePopup as it's called but not defined in the original snippet
+        function closePopup() {
+            const popup = document.getElementById("popup");
+            popup.classList.add("hidden");
+            // Optional: Stop the sound if it's still playing
+            const sound = document.getElementById("timer-sound");
+            sound.pause();
+            sound.currentTime = 0;
+        }
+
+        // Add event listener for the Enter key in the input field
+        document.getElementById("user-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault(); // Prevent the default action (form submission)
+                sendMessage(); // Call the sendMessage function
+            }
+        });
+
+    </script>
+
+</body>
+</html>
